@@ -74,8 +74,8 @@ local function p8Writer(oldP8, patterns, playOrder)
   for i = 1, #patterns do
     local pattern = patterns[i]
     local sfx = "01"
-    --sfx = sfx .. byte2hex(pattern.speed * 3) .. "0000"
-    sfx = sfx .. byte2hex(pattern.speed) .. "0000"
+    sfx = sfx .. byte2hex(pattern.speed * 3) .. "0000"
+    --sfx = sfx .. byte2hex(pattern.speed) .. "0000"
     for c = 1, 32 do
       local note = pattern.notes[c]
       
@@ -118,8 +118,8 @@ local function p8Writer(oldP8, patterns, playOrder)
 end
 
 function M.writeP8(oldP8, patterns, playOrder)
-  return debugWriter(patterns, playOrder)
-  --return p8Writer(oldP8, patterns, playOrder)
+  --return debugWriter(patterns, playOrder)
+  return p8Writer(oldP8, patterns, playOrder)
 end
 
 return M

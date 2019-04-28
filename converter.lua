@@ -20,7 +20,9 @@ local function convertPattern(module, pnumber)
   
   -- TODO: Check, if the whole pattern can be compressed
   local curPitch = {-1, -1, -1}
-  local curInstrument = {-1, -1, -1}
+  local curInstrument = {0, 0, 0}
+  local curOrnament = {0, 0, 0}
+  local curOrnamentIdx = {1, 1, 1}
   local curVolume = {7, 7, 7}
   
   for i = 1, #src do
@@ -102,15 +104,42 @@ local function convertPattern(module, pnumber)
         elseif fx == 6 then
           -- "Tremolo", used to "imitate" fade out/fade it
 
-        elseif fx == 11 then
+        elseif fx == 11 and i == 1 then
           -- Pattern speed
-
+          local speed = math.fmod(srcNote.fx, 256)
+          converted[1][1].speed = speed
+          converted[1][2].speed = speed
+          converted[1][3].speed = speed
+          converted[2][1].speed = speed
+          converted[2][2].speed = speed
+          converted[2][3].speed = speed
         end
+      end
+
+      -- Ornament
+      if srcNote.ornament ~= nil then
+        local ornament = srcNote.ornament
+        if ornament == 0 or module.ornaments[ornament].ignore then
+          curOrnament[c] = 0
+        else
+          curOrnament[c] = ornament
+        end
+        curOrnamentIdx[c] = 1
       end
       
       -- Fill note data
       if curPitch[c] ~= -1 then
-        note.pitch = curPitch[c]
+        if curOrnament[c] ~= 0 then
+          local ornament = module.ornaments[curOrnament[c]]
+          note.pitch = curPitch[c] + ornament.distinct[curOrnamentIdx[c]]
+          note.fx = (ornament.speed > 1) and 7 or 6
+          curOrnamentIdx[c] = curOrnamentIdx[c] + 1
+          if curOrnamentIdx[c] == 5 then
+            curOrnamentIdx[c] = 1
+          end
+        else
+          note.pitch = curPitch[c]
+        end
         note.instrument = curInstrument[c]
         note.volume = curVolume[c]
       end
@@ -122,6 +151,10 @@ local function convertPattern(module, pnumber)
         table.insert(converted[2][c].notes, note)
       end
     end
+  end
+
+  if #(converted[2][1].notes) == 0 then
+    table.remove(converted, 2)
   end
   
   return converted
@@ -165,6 +198,31 @@ local function addPattern(pattern, existingPatterns)
 end
 
 
+local function preprocessOrnaments(module)
+  for i = 1, #(module.ornaments) do
+    local ornament = module.ornaments[i]
+    if #(ornament.values) < 4 or ornament.loop ~= 1 then
+      ornament.ignore = true
+    else
+      local distinct = {}
+      table.insert(distinct, ornament.values[1])
+      for c = 1, #(ornament.values) do
+        if ornament.values[c] ~= distinct[#distinct] then
+          table.insert(distinct, ornament.values[c])
+        end
+      end
+      if #distinct == 4 then
+        ornament.distinct = distinct
+        ornament.speed = math.floor(#(ornament.values) / #distinct)
+        ornament.ignore = false
+      else
+        ornament.ignore = true
+      end
+    end
+  end
+end
+
+
 --
 -- Public API
 --
@@ -173,7 +231,12 @@ function M.convert(modules, existing)
   local patterns = {}
   local playOrder = {}
   local has4Channels = (#modules == 2)
-  
+
+  -- Preprocess ornaments
+  for i = 1, #modules do
+    preprocessOrnaments(modules[i])
+  end
+
   for i = 1, #(modules[1].playOrder) do
     -- Iterate through playing order of a track
     local converted1 = convertPattern(modules[1], modules[1].playOrder[i])
