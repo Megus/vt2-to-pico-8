@@ -26,21 +26,45 @@ local function convertPattern(module, pnumber)
   for i = 1, #src do
     for c = 1, 3 do
       local srcNote = src[i][c]
+      local note = {}
 
       -- Instrument
       if srcNote.sample ~= nil then
         local sample = srcNote.sample
-        if sample == 8 then sample = 0 end
-        if sample >= 10 and sample <= 17 then sample = sample - 2 end
-        if sample >= 18 and sample <= 25 then
+        if sample == 8 then -- Convert sample 8 to a triangle wave
+          sample = 0
+        elseif sample >= 10 and sample <= 17 then -- SFX instruments 0-7
+          sample = sample - 2
+        elseif sample >= 18 and sample <= 25 then -- Drums with drop effect
           sample = sample - 18
           note.fx = 3
+        elseif not (sample > 0 and sample <= 7) then -- All other samples become triangle
+          sample = 0
         end
+
+        -- For convenience we convert 8/A/C/E AY envelopes to matching PICO-8 waves
+        -- We do it only for pure waves, not for SFX instruments
+        local envelope = srcNote.envelope
+        if envelope ~= nil then
+          if sample < 8 then
+            if envelope == 10 or envelope == 14 then
+              sample = 0
+            elseif envelope == 8 or envelope == 12 then
+              sample = 2
+            end
+          end
+          -- To use fade out/fade in effects in PICO-8 we use envelopes 1/2/3 and D
+          if envelope >= 1 and envelope <= 3 then
+            note.fx = 5
+          elseif envelope == 13 then
+            note.fx = 4
+          end
+        end
+
         curInstrument[c] = sample
       end
       
       -- Pitch
-      local note = {}
       if srcNote.pitch ~= nil then
         local pitch = srcNote.pitch
         if pitch ~= -1 then
@@ -49,11 +73,17 @@ local function convertPattern(module, pnumber)
           if pitch < 0 then pitch = 0 end
           if pitch > 60 then pitch = 60 end
 
+          -- For SFX instruments, we use effect 3 for retriggering envelope on the same note
           if curPitch[c] == pitch and curInstrument[c] >= 8 then
             note.fx = 3
           end
         end
         curPitch[c] = pitch
+      else
+        -- Shut channel if the previous note was a drum
+        if i ~= 1 and src[i - 1].sample ~= nil and src[i - 1][c].sample >= 18 and src[i - 1][c].sample <= 25 then
+          curPitch[c] = -1
+        end
       end
       
       -- Volume
@@ -61,13 +91,31 @@ local function convertPattern(module, pnumber)
         curVolume[c] = math.floor(srcNote.volume / 2)
         if curVolume[c] == 0 then curVolume[c] = 1 end
       end
+
+      -- FX
+      if srcNote.fx ~= nil then
+        local fx = math.floor(srcNote.fx / 4096)
+
+        if fx == 3 then
+          -- Portamento
+          note.fx = 1
+        elseif fx == 6 then
+          -- "Tremolo", used to "imitate" fade out/fade it
+
+        elseif fx == 11 then
+          -- Pattern speed
+
+        end
+      end
       
+      -- Fill note data
       if curPitch[c] ~= -1 then
         note.pitch = curPitch[c]
         note.instrument = curInstrument[c]
         note.volume = curVolume[c]
       end
       
+      -- Here's how we break 64-note patterns into halves
       if i < 33 then
         table.insert(converted[1][c].notes, note)
       else
@@ -127,6 +175,7 @@ function M.convert(modules, existing)
   local has4Channels = (#modules == 2)
   
   for i = 1, #(modules[1].playOrder) do
+    -- Iterate through playing order of a track
     local converted1 = convertPattern(modules[1], modules[1].playOrder[i])
     local converted2 = nil
     if has4Channels then

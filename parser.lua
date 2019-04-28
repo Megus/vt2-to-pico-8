@@ -110,7 +110,7 @@ local function parseNote(str, channel, curSample, curOrnament, curVolume)
   -- Pitch
   local pitchStr = string.sub(str, 1, 1)
   if pitchStr ~= "-" then
-    if pitchStr == "R" then
+    if pitchStr == "R" then -- Pause
       note.pitch = -1
     else
       local pitch = pitches[pitchStr]
@@ -190,11 +190,13 @@ local function parsePattern(vtm, module, idx)
   local noiseOffset = 0
 
   repeat
+    -- Iterate throw pattern rows
     idx = idx + 1
     str = trim(vtm[idx])
     local row = {}
 
     if string.len(str) ~= 0 then
+      -- Parse notes of each channel
       table.insert(row, parseNote(string.sub(str, 9, 21), 1, curSample, curOrnament, curVolume))
       table.insert(row, parseNote(string.sub(str, 23, 35), 2, curSample, curOrnament, curVolume))
       table.insert(row, parseNote(string.sub(str, 37), 3, curSample, curOrnament, curVolume))
