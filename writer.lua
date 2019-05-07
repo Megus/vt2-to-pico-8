@@ -118,8 +118,8 @@ local function p8Writer(oldP8, patterns, playOrder)
 end
 
 function M.writeP8(oldP8, patterns, playOrder)
-  --return debugWriter(patterns, playOrder)
-  return p8Writer(oldP8, patterns, playOrder)
+  return debugWriter(patterns, playOrder)
+  --return p8Writer(oldP8, patterns, playOrder)
 end
 
 return M

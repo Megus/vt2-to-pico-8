@@ -22,7 +22,7 @@ local function convertPattern(module, pnumber)
   local curPitch = {-1, -1, -1}
   local curInstrument = {0, 0, 0}
   local curOrnament = {0, 0, 0}
-  local curOrnamentIdx = {1, 1, 1}
+  local curOrnamentPitch = {0, 0, 0}
   local curVolume = {7, 7, 7}
   
   for i = 1, #src do
@@ -117,26 +117,42 @@ local function convertPattern(module, pnumber)
       end
 
       -- Ornament
-      if srcNote.ornament ~= nil then
+      if srcNote.ornament ~= nil and curPitch[c] ~= -1 then
         local ornament = srcNote.ornament
         if ornament == 0 or module.ornaments[ornament].ignore then
           curOrnament[c] = 0
         else
           curOrnament[c] = ornament
+          if math.fmod(i - 1, 4) ~= 0 then
+            local orn = module.ornaments[ornament]
+            local notes = (i < 33) and converted[1][c].notes or converted[2][c].notes
+            local ti = (i < 33) and (i - 1) or (i - 33)
+            while math.fmod(ti - 1, 4) ~= 3 do
+              if notes[ti].pitch == -1 or notes[ti].pitch == nil then
+                notes[ti] = {
+                  volume = 0,
+                  instrument = curInstrument[c],
+                  pitch = curPitch[c] + orn.distinct[math.fmod(ti - 1, 4) + 1]
+                }
+              else
+                -- TODO: Detailed error
+                print("Can't fit ornament " .. "ti: " .. ti .. ", " .. notes[ti].pitch)
+              end
+
+              ti = ti - 1
+            end
+          end
         end
-        curOrnamentIdx[c] = 1
+        curOrnamentPitch[c] = curPitch[c]
       end
       
       -- Fill note data
       if curPitch[c] ~= -1 then
         if curOrnament[c] ~= 0 then
+          local idx = math.fmod(i - 1, 4) + 1
           local ornament = module.ornaments[curOrnament[c]]
-          note.pitch = curPitch[c] + ornament.distinct[curOrnamentIdx[c]]
+          note.pitch = curOrnamentPitch[c] + ornament.distinct[idx]
           note.fx = (ornament.speed > 1) and 7 or 6
-          curOrnamentIdx[c] = curOrnamentIdx[c] + 1
-          if curOrnamentIdx[c] == 5 then
-            curOrnamentIdx[c] = 1
-          end
         else
           note.pitch = curPitch[c]
         end
