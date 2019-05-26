@@ -27,23 +27,6 @@ end
 -- Parser functions
 --
 
--- Read file
-local function readVT2(filename)
-  -- TODO: Handle errors
-  local vtFile = io.open(filename, "r")
-  local vtLines = {}
-  local str
-  repeat
-    local str = vtFile:read("*line")
-    if str ~= nil then
-      table.insert(vtLines, str)
-    end
-  until str == nil
-  
-  io.close(vtFile)
-  return vtLines
-end
-
 -- Parse the list of integers with a loop mark
 local function parseLoopedIntList(str)
   local list = {}
@@ -263,9 +246,29 @@ end
 -- Public API
 --
 
+-- Read file
+function M.readFile(filename)
+  local file = io.open(filename, "r")
+  if file == nil then return nil end
+
+  local lines = {}
+  local str
+  repeat
+    local str = file:read("*line")
+    if str ~= nil then
+      table.insert(lines, str)
+    end
+  until str == nil
+  
+  io.close(file)
+  return lines
+end
+
+
 -- Load VT2 module from a file
 function M.load(filename)
-  local vtm = readVT2(filename)
+  local vtm = M.readFile(filename)
+  if vtm == nil then return nil end
   return parseVT2(vtm)
 end
 

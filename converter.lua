@@ -75,10 +75,18 @@ local function convertPattern(module, pnumber)
           if pitch < 0 then pitch = 0 end
           if pitch > 60 then pitch = 60 end
 
+          -- Check for ornament conflicts
+          if math.fmod(i - 1, 4) ~= 0 and curOrnament[c] ~= 0 then
+              error("Can't add note because of a conflict with ornament")
+          end
+
           -- For SFX instruments, we use effect 3 for retriggering envelope on the same note
           if curPitch[c] == pitch and curInstrument[c] >= 8 then
             note.fx = 3
           end
+        elseif math.fmod(i - 1, 4) == 0 then
+          -- Stop ornament if R-- was put on arpeggio "border"
+          curOrnament[c] = 0
         end
         curPitch[c] = pitch
       else
@@ -136,7 +144,7 @@ local function convertPattern(module, pnumber)
                 }
               else
                 -- TODO: Detailed error
-                print("Can't fit ornament " .. "ti: " .. ti .. ", " .. notes[ti].pitch)
+                error("Can't fit ornament " .. "ti: " .. ti .. ", " .. notes[ti].pitch)
               end
 
               ti = ti - 1
@@ -158,7 +166,18 @@ local function convertPattern(module, pnumber)
         end
         note.instrument = curInstrument[c]
         note.volume = curVolume[c]
-      end
+      elseif curOrnament[c] ~= 0 then
+        -- Fill ornament till the end
+        local idx = math.fmod(i - 1, 4) + 1
+        local ornament = module.ornaments[curOrnament[c]]
+        note.pitch = curOrnamentPitch[c] + ornament.distinct[idx]
+        note.volume = 0
+        note.instrument = curInstrument[c]
+        note.fx = (ornament.speed > 1) and 7 or 6
+        if idx == 4 then
+          curOrnament[c] = 0
+        end
+    end
       
       -- Here's how we break 64-note patterns into halves
       if i < 33 then

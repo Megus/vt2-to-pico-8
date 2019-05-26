@@ -62,13 +62,28 @@ local function nibble2hex(nibble)
 end
 
 local function p8Writer(oldP8, patterns, playOrder)
-  local p8 = "pico-8 cartridge // http://www.pico-8.com\nversion 16\n__sfx__\n"
-  
-  local emptySfx = "010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-  
-  -- Add empty sfx for custom instruments
-  for i = 1, 8 do
-    p8 = p8 .. emptySfx .. "\n"
+  local p8
+
+  if oldP8 ~= nil then
+    p8 = ""
+    local stopIdx = 0
+    for i, v in ipairs(oldP8) do
+      p8 = p8 .. v .. "\n"
+      if i == stopIdx then break end
+      if v == "__sfx__" then
+        stopIdx = i + 8
+      end
+    end
+
+  else
+    p8 = "pico-8 cartridge // http://www.pico-8.com\nversion 16\n__sfx__\n"
+    
+    local emptySfx = "010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    
+    -- Add empty sfx for custom instruments
+    for i = 1, 8 do
+      p8 = p8 .. emptySfx .. "\n"
+    end
   end
   
   for i = 1, #patterns do
@@ -118,8 +133,8 @@ local function p8Writer(oldP8, patterns, playOrder)
 end
 
 function M.writeP8(oldP8, patterns, playOrder)
-  return debugWriter(patterns, playOrder)
-  --return p8Writer(oldP8, patterns, playOrder)
+  --return debugWriter(patterns, playOrder)
+  return p8Writer(oldP8, patterns, playOrder)
 end
 
 return M
