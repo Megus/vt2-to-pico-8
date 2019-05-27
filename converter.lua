@@ -1,10 +1,19 @@
 local inspect = require("inspect")
+local L = require("logger")
 
 local M = {}
 
+
 -- Convert VT2 pattern to a set of PICO-8 pattern
-local function convertPattern(module, pnumber)
+local function convertPattern(modules, moduleNumber, pnumber)
+  local module = modules[moduleNumber]
   local src = module.patterns[pnumber]
+
+  if #src ~= 32 and #src ~= 64 then
+    L.error(L.E.wrongPatternLength, {module = moduleNumber, pattern = pnumber - 1})
+    return nil
+  end
+
   local converted = {
     {
       {speed = module.speed, notes = {}},
@@ -233,11 +242,15 @@ local function addPattern(pattern, existingPatterns)
 end
 
 
-local function preprocessOrnaments(module)
+local function preprocessOrnaments(modules, moduleNumber)
+  local module = modules[moduleNumber]
   for i = 1, #(module.ornaments) do
     local ornament = module.ornaments[i]
     if #(ornament.values) < 4 or ornament.loop ~= 1 then
       ornament.ignore = true
+      if not (#ornament.values == 1 and ornament.values[1] == 0) then
+        L.warning(L.W.ignoredOrnament, {module = moduleNumber, ornament = i})
+      end
     else
       local distinct = {}
       table.insert(distinct, ornament.values[1])
@@ -252,6 +265,7 @@ local function preprocessOrnaments(module)
         ornament.ignore = false
       else
         ornament.ignore = true
+        L.warning(L.W.ignoredOrnament, {module = moduleNumber, ornament = i})
       end
     end
   end
@@ -269,29 +283,31 @@ function M.convert(modules, existing)
 
   -- Preprocess ornaments
   for i = 1, #modules do
-    preprocessOrnaments(modules[i])
+    preprocessOrnaments(modules, i)
   end
 
   for i = 1, #(modules[1].playOrder) do
     -- Iterate through playing order of a track
-    local converted1 = convertPattern(modules[1], modules[1].playOrder[i])
+    local converted1 = convertPattern(modules, 1, modules[1].playOrder[i])
     local converted2 = nil
     if has4Channels then
-      converted2 = convertPattern(modules[2], modules[2].playOrder[i])
+      converted2 = convertPattern(modules, 2, modules[2].playOrder[i])
     end
     
-    for j = 1, #converted1 do
-      local order = {}
-      local ptns = converted1[j]
-      table.insert(order, addPattern(ptns[1], patterns))
-      table.insert(order, addPattern(ptns[2], patterns))
-      table.insert(order, addPattern(ptns[3], patterns))
-      if has4Channels and j <= #converted2 then
-        table.insert(order, addPattern(converted2[j][1], patterns))
-      else
-        table.insert(order, -1)
+    if converted1 ~= nil then
+      for j = 1, #converted1 do
+        local order = {}
+        local ptns = converted1[j]
+        table.insert(order, addPattern(ptns[1], patterns))
+        table.insert(order, addPattern(ptns[2], patterns))
+        table.insert(order, addPattern(ptns[3], patterns))
+        if has4Channels and j <= #converted2 then
+          table.insert(order, addPattern(converted2[j][1], patterns))
+        else
+          table.insert(order, -1)
+        end
+        table.insert(playOrder, order)
       end
-      table.insert(playOrder, order)
     end
   end
   
