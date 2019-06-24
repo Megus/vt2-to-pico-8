@@ -15,6 +15,10 @@ if vt2name == nil or p8name == nil then
 end
 
 local modules = parser.load(vt2name)
+if modules == nil then 
+  print("Can't open " .. vt2name .. "\n")
+  return
+end
 -- TODO: Check, if it was really loaded
 print("Converting " .. vt2name .. "...")
 
