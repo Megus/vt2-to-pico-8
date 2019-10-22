@@ -6,16 +6,17 @@ local writer = require("writer")
 
 local vt2name = arg[1]
 local p8name = arg[2]
+local append = arg[3]
 
 print("\nVortex Tracker 2 to PICO-8 music converter v1.0 by Roman \"Megus\" Petrov\n")
 
 if vt2name == nil or p8name == nil then
-  print("Usage: lua vt2pico8.lua vt2file p8file")
+  print("Usage: lua vt2pico8.lua vt2file p8file [-append]")
   return
 end
 
 local modules = parser.load(vt2name)
-if modules == nil then 
+if modules == nil then
   print("Can't open " .. vt2name .. "\n")
   return
 end
@@ -41,7 +42,7 @@ if errorLog == "" then
   if oldP8 ~= nil then
     successString = "Updated " .. p8name
   end
-  local newP8 = writer.writeP8(oldP8, patterns, order)
+  local newP8 = writer.writeP8(oldP8, patterns, order, append == "-append")
   local file = io.open(p8name, "w")
   file:write(newP8)
   io.close(file)
