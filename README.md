@@ -16,7 +16,7 @@ If any known error is found during converting, the converter will stop and show 
 
 You can convert regular (for a single AY/YM chip) or Turbo Sound modules (for 2 AY/YM chips). The converter will take the first 4 channels of a Turbo Sound module and ignore the other two channels.
 
-Use should set 120Hz frame rate in VT2 to match PICO-8 speed.
+You should set 120Hz frame rate in VT2 to match PICO-8 speed.
 
 Valid notes: C-2 – C-7.
 
