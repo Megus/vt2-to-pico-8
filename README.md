@@ -29,7 +29,7 @@ The converter allows you to use both basic PICO-8 waves and SFX instruments (whe
 - PICO-8 allows you to make basic kick drum sounds with effect 3 (drop), so VT2 samples I-P are converted as kicks with different waveforms.
 - You can use AY envelopes 8/C and A/E and they will be converted to waves 2 (saw) and 0 (triangle) correspondingly. The envelope period value is ignored, the converter uses only note. If you use kick samples (I-P) with envelope, they will be converted correctly.
 
-The converter includes a template VT2 file with samples 1-8 and I-P filled with pure sounds and kicks.
+The converter includes a template VT2 file (template.vt2) with samples 1-8 and I-P filled with pure sounds and kicks.
 
 ### Ornaments
 
