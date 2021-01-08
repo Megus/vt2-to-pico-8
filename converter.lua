@@ -26,14 +26,14 @@ local function convertPattern(modules, moduleNumber, pnumber)
       {speed = module.speed, notes = {}}
     },
   }
-  
+
   -- TODO: Check, if the whole pattern can be compressed
   local curPitch = {-1, -1, -1}
   local curInstrument = {0, 0, 0}
   local curOrnament = {0, 0, 0}
   local curOrnamentPitch = {0, 0, 0}
   local curVolume = {7, 7, 7}
-  
+
   for i = 1, #src do
     for c = 1, 3 do
       local srcNote = src[i][c]
@@ -74,7 +74,7 @@ local function convertPattern(modules, moduleNumber, pnumber)
 
         curInstrument[c] = sample
       end
-      
+
       -- Pitch
       if srcNote.pitch ~= nil then
         local pitch = srcNote.pitch
@@ -104,7 +104,7 @@ local function convertPattern(modules, moduleNumber, pnumber)
           curPitch[c] = -1
         end
       end
-      
+
       -- Volume
       if srcNote.volume ~= nil then
         curVolume[c] = math.floor(srcNote.volume / 2)
@@ -120,6 +120,9 @@ local function convertPattern(modules, moduleNumber, pnumber)
           note.fx = 1
         elseif fx == 6 then
           -- "Tremolo", used to "imitate" fade out/fade it
+
+        elseif fx == 7 then
+          note.fx = 2
 
         elseif fx == 11 and i == 1 then
           -- Pattern speed
@@ -162,7 +165,7 @@ local function convertPattern(modules, moduleNumber, pnumber)
         end
         curOrnamentPitch[c] = curPitch[c]
       end
-      
+
       -- Fill note data
       if curPitch[c] ~= -1 then
         if curOrnament[c] ~= 0 then
@@ -187,7 +190,7 @@ local function convertPattern(modules, moduleNumber, pnumber)
           curOrnament[c] = 0
         end
     end
-      
+
       -- Here's how we break 64-note patterns into halves
       if i < 33 then
         table.insert(converted[1][c].notes, note)
@@ -200,7 +203,7 @@ local function convertPattern(modules, moduleNumber, pnumber)
   if #(converted[2][1].notes) == 0 then
     table.remove(converted, 2)
   end
-  
+
   return converted
 end
 
@@ -293,7 +296,7 @@ function M.convert(modules, existing)
     if has4Channels then
       converted2 = convertPattern(modules, 2, modules[2].playOrder[i])
     end
-    
+
     if converted1 ~= nil then
       for j = 1, #converted1 do
         local order = {}
@@ -310,7 +313,7 @@ function M.convert(modules, existing)
       end
     end
   end
-  
+
   return patterns, playOrder
 end
 

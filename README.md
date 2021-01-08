@@ -35,7 +35,7 @@ The converter includes a template VT2 file (template.vt2) with samples 1-8 and I
 
 PICO-8 doesn't have ornaments, but it has the arpeggio effect (6 and 7). Arpeggios are quite limited on PICO-8: it arpeggiates 4 notes placed on SFX rows 0-3, 4-7... You have to remember it while writing music for PICO-8 in VT2!
 
-Ornaments must be looped and have exactly 4 notes. You can duplicate ornament rows to make slower arpeggios, e.g. both 0, 4, 7, 12 and 0, 0, 4, 4, 7, 7, 12, 12 ornaments are valid. Ornaments with duplicated rows will be converted with effect 7 (slow arpeggio) instead of 6 (fast arpeggio). Invalid ornaments (not looped, with more or less notes) are ignored.
+Ornaments must be looped and have exactly 4 notes. You can duplicate ornament rows to make slower arpeggios, e.g. both 0, 4, 7, 12 and 0, 0, 4, 4, 7, 7, 12, 12 ornaments are valid. Ornaments with duplicated rows will be converted with effect 7 (slow arpeggio) instead of 6 (fast arpeggio). Invalid ornaments (not looped, with more or fewer notes) are ignored.
 
 ### Effects
 
