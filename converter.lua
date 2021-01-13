@@ -107,7 +107,13 @@ local function convertPattern(modules, moduleNumber, pnumber)
 
       -- Volume
       if srcNote.volume ~= nil then
-        curVolume[c] = math.floor(srcNote.volume / 2)
+        if (srcNote.volume >= 10) then
+          curVolume[c] = srcNote.volume - 8
+        else
+          curVolume[c] = 1
+        end
+
+        --curVolume[c] = math.floor(srcNote.volume / 2)
         if curVolume[c] == 0 then curVolume[c] = 1 end
       end
 
